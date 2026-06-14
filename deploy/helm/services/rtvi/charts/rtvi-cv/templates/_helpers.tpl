@@ -47,6 +47,20 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 
 {{- define "vss-rtvi-cv.image" -}}{{ printf "%s:%s" .Values.image.repository .Values.image.tag }}{{- end -}}
 
+{{/*
+Shell prefix that prepends .Values.extraLibraryPaths to LD_LIBRARY_PATH before
+launching DeepStream. The image's baked LD_LIBRARY_PATH is preserved (only
+prepended to), so this is safe on every platform. Renders to "" when the list
+is empty. Needed on OpenShift/RHCOS where the GPU Operator injects the real
+driver libs into /usr/lib64 instead of the Debian multiarch path the Ubuntu
+image expects.
+*/}}
+{{- define "vss-rtvi-cv.ldLibraryPathPrefix" -}}
+{{- with .Values.extraLibraryPaths -}}
+{{- printf "export LD_LIBRARY_PATH=%s${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}; " (join ":" .) -}}
+{{- end -}}
+{{- end -}}
+
 {{- define "vss-rtvi-cv.scriptsConfigMapName" -}}
 {{- if .Values.scripts.existingConfigMap }}
 {{- .Values.scripts.existingConfigMap }}

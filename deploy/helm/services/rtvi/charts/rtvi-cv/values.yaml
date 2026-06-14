@@ -35,6 +35,18 @@ statefulSetName: "vss-rtvi-cv"
 workingDir: /opt/nvidia/deepstream/deepstream/sources/apps/sample_apps/metropolis_perception_app
 runtimeClassName: ""
 
+# Directories prepended to LD_LIBRARY_PATH at container startup. They are
+# prepended (the image's baked LD_LIBRARY_PATH is preserved), so this is safe on
+# any platform. Required on OpenShift/RHCOS: the GPU Operator injects the real
+# driver libraries (e.g. libnvidia-ml.so.1) into /usr/lib64 (RHEL layout), while
+# the Ubuntu-based DeepStream image looks under /usr/lib/x86_64-linux-gnu where
+# it only finds a 0-byte stub -> "libnvidia-ml.so.1: file too short" and the
+# GStreamer pipeline fails to create src_nvmultiurisrcbin. On vanilla Kubernetes
+# /usr/lib64 holds no driver libs, so the loader falls through to the existing
+# paths and behavior is unchanged. Set to [] to disable.
+extraLibraryPaths:
+  - /usr/lib64
+
 service:
   port: 9010
   type: ClusterIP
